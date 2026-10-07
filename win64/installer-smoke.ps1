@@ -8,10 +8,22 @@ Set-Location -LiteralPath (Split-Path -Parent $PSScriptRoot)
 $ver = ((Get-Content CORE_VERSION.txt) | Where-Object { $_ -like 'version=*' }) -replace '^version=', ''
 $setup = (Resolve-Path "dist-installer\SphaeraCommander-$ver-setup.exe").Path
 $cfg = Join-Path $env:APPDATA "SphaeraCommander"
-$uninsKey = "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\B8CE0EF6-B7C3-4EBF-9C89-7489BB311EA5_is1"
+$guid = "B8CE0EF6-B7C3-4EBF-9C89-7489BB311EA5"
+
+# Ключ деинсталлятора ищем по GUID-подстроке в обоих представлениях
+# реестра: имя ключа Inno зависит от трактовки фигурных скобок в AppId.
+function Get-UninstallKey {
+    foreach ($root in @("HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+                        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall")) {
+        $found = Get-ChildItem $root -ErrorAction SilentlyContinue |
+                 Where-Object { $_.PSChildName -like "*$guid*" }
+        if ($found) { return $found }
+    }
+    return $null
+}
 
 function Get-InstallLocation {
-    $k = Get-Item $uninsKey -ErrorAction SilentlyContinue
+    $k = Get-UninstallKey
     if ($k) { return (Get-ItemProperty $k.PSPath).InstallLocation }
     return $null
 }
@@ -58,5 +70,6 @@ $startMenu = Join-Path $env:ProgramData "Microsoft\Windows\Start Menu\Programs\S
 if (Test-Path $startMenu) { throw "ярлык «Пуск» не удалён" }
 $key = Get-Item "Registry::HKEY_CLASSES_ROOT\Directory\shell\SphaeraCommander" -ErrorAction SilentlyContinue
 if ($key) { throw "ассоциация Directory\shell не удалена" }
+if (Get-UninstallKey) { throw "ключ деинсталлятора не удалён" }
 
 Write-Host "СМОК OK: установка, SELFCHECK, обновление (конфиг цел), деинсталляция без мусора"
