@@ -31,16 +31,24 @@ jobs:
       - uses: actions/checkout@v4
       - name: Выкачать общий код (Linux-репозиторий)
         uses: actions/checkout@v4
+        id: core
+        continue-on-error: true
         with:
           repository: ${{ env.CORE_REPO }}
           ref: ${{ env.CORE_REF }}
           path: core
+        # Приватный кросс-репо недоступен дефолтному GITHUB_TOKEN.
+        # Включить полную проверку: секрет CORE_REPO_TOKEN (PAT с доступом
+        # на чтение Linux-репо) + строка «token: ${{ secrets.CORE_REPO_TOKEN }}»
+        # здесь, либо открытые репозитории.
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: sync_core
+        if: steps.core.outcome == 'success'
         run: python sync_core.py --source core
       - name: sync_core --check
+        if: steps.core.outcome == 'success'
         run: python sync_core.py --check --source core
       - name: Тесты платформенного слоя
         run: python -m unittest discover -s tests -v
