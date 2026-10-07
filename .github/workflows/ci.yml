@@ -114,6 +114,27 @@ jobs:
         with:
           name: SphaeraCommander-win64
           path: dist/SphaeraCommander/
+      - name: Версия ядра
+        if: steps.core.outcome == 'success'
+        id: ver
+        shell: pwsh
+        run: |
+          $ver = ((Get-Content CORE_VERSION.txt) | Where-Object { $_ -like 'version=*' }) -replace '^version=', ''
+          "version=$ver" >> $env:GITHUB_OUTPUT
+      - name: Установщик Inno Setup
+        if: steps.core.outcome == 'success'
+        shell: pwsh
+        run: ISCC /DAPP_VERSION=${{ steps.ver.outputs.version }} win64\installer.iss
+      - name: Артефакт установщика
+        if: steps.core.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SphaeraCommander-win64-setup
+          path: dist-installer/
+      - name: Смок-тест установщика (install/update/uninstall)
+        if: steps.core.outcome == 'success'
+        shell: pwsh
+        run: win64\installer-smoke.ps1
       - name: Доступ к ядру
         if: steps.core.outcome != 'success'
         shell: pwsh

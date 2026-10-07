@@ -16,6 +16,7 @@ if ($LASTEXITCODE -ne 0) { throw "pip завершился с кодом $LASTEX
 
 python -m PyInstaller --noconfirm --windowed --name SphaeraCommander `
   --paths . `
+  --icon win64\sphaera-commander.ico `
   --add-data "sphaera_commander/assets;sphaera_commander/assets" `
   --add-data "sphaera_commander/plugins;sphaera_commander/plugins" `
   --hiddenimport pypdfium2 --hiddenimport pypdf --hiddenimport docx `
