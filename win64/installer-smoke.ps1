@@ -7,8 +7,14 @@ Set-Location -LiteralPath (Split-Path -Parent $PSScriptRoot)
 
 $ver = ((Get-Content CORE_VERSION.txt) | Where-Object { $_ -like 'version=*' }) -replace '^version=', ''
 $setup = (Resolve-Path "dist-installer\SphaeraCommander-$ver-setup.exe").Path
-$app = Join-Path $env:ProgramFiles "SphaeraCommander"
 $cfg = Join-Path $env:APPDATA "SphaeraCommander"
+$uninsKey = "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\B8CE0EF6-B7C3-4EBF-9C89-7489BB311EA5_is1"
+
+function Get-InstallLocation {
+    $k = Get-Item $uninsKey -ErrorAction SilentlyContinue
+    if ($k) { return (Get-ItemProperty $k.PSPath).InstallLocation }
+    return $null
+}
 
 function Invoke-Setup([string]$path, [string[]]$argList) {
     $p = Start-Process -FilePath $path -ArgumentList $argList -Wait -PassThru
@@ -18,10 +24,14 @@ function Invoke-Setup([string]$path, [string[]]$argList) {
 # 1. установка
 Invoke-Setup $setup @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART")
 $deadline = (Get-Date).AddSeconds(60)
-while (-not (Test-Path (Join-Path $app "SphaeraCommander.exe")) -and
-        (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 500 }
-if (-not (Test-Path (Join-Path $app "SphaeraCommander.exe"))) {
-    throw "после установки exe не появился"
+$app = $null
+while (-not $app -and (Get-Date) -lt $deadline) {
+    $app = Get-InstallLocation
+    if (-not $app) { Start-Sleep -Milliseconds 500 }
+}
+$exe = Join-Path $app "SphaeraCommander.exe"
+if (-not ($app -and (Test-Path $exe))) {
+    throw "после установки exe не появился (loc=$app)"
 }
 
 # 2. SELFCHECK установленного exe

@@ -26,6 +26,8 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayIcon={app}\SphaeraCommander.exe
+; 64-битный режим установки: иначе Inno кладёт {autopf} в Program Files (x86)
+ArchitecturesInstallIn64BitMode=x64compatible
 
 [Tasks]
 Name: "desktop"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
