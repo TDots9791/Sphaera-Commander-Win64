@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
 
 env:
-  CORE_REPO: SphaeraLTI/sphaera-commander   # ← проверить/поправить при первом push
+  CORE_REPO: TDots9791/Sphaera-Commander     # фактический репозиторий-источник общего кода
   CORE_REF: main
 
 jobs:
