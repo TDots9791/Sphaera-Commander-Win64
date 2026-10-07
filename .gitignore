@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+build/
+dist/
+# Общий код не хранится (ТЗ §2): копию регенерирует sync_core.py.
+/sphaera_commander/
+/.sphaera_commander.sync-tmp/
+# Состояние sphaera-context-engine
+/.sphaera/

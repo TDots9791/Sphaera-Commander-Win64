@@ -1,0 +1,46 @@
+# CI Sphaera Commander Win64 (ТЗ §5).
+#
+# Ф0: sync_core + тесты платформенного слоя на ubuntu- и windows-раннерах.
+# Ф2 расширит: полный unittest-набор offscreen, PyInstaller onedir,
+# SPHAERA_SELFCHECK, артефакт .zip.
+#
+# Требует, чтобы ОБА репозитория были на GitHub и переменные ниже
+# указывали на них (сейчас remotes нет — workflow заработает после
+# первого push владельцем).
+
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CORE_REPO: SphaeraLTI/sphaera-commander   # ← проверить/поправить при первом push
+  CORE_REF: main
+
+jobs:
+  platform:
+    name: platform-тесты (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Выкачать общий код (Linux-репозиторий)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.CORE_REPO }}
+          ref: ${{ env.CORE_REF }}
+          path: core
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: sync_core
+        run: python sync_core.py --source core
+      - name: sync_core --check
+        run: python sync_core.py --check --source core
+      - name: Тесты платформенного слоя
+        run: python -m unittest discover -s tests -v
