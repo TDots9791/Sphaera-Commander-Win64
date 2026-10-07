@@ -1,4 +1,4 @@
-# Сборка Windows-версии (PyInstaller onedir): dist/SphaeraCommander/SphaeraCommander.exe
+﻿# Сборка Windows-версии (PyInstaller onedir): dist/SphaeraCommander/SphaeraCommander.exe
 #
 # Запускать из корня репозитория ПОСЛЕ sync_core.py — ядро (sphaera_commander)
 # в git не хранится (ТЗ §2). Требования: python 3.10+ на PATH.
