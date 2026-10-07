@@ -162,6 +162,11 @@ def check(dest_root: Path, source: Path,
 
 def main(argv: list[str] | None = None,
          dest_root: Path | None = None) -> int:
+    # Windows-консоль по умолчанию в cp1251/cp866 — кириллица print()
+    # падает UnicodeEncodeError; вывод принудительно в UTF-8.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(
         description="Подтянуть общий код из Linux-репозитория (ТЗ §2)")
     ap.add_argument("--source", type=Path, default=None,

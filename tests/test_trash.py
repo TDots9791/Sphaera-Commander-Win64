@@ -82,18 +82,39 @@ class TestRealRecycleBin(unittest.TestCase):
         self.assertFalse(os.path.exists(path))
 
     def test_deep_unicode_path(self):
-        # ТЗ §7.6: длинные и юникодные пути — главный риск ctypes.
+        # Юникод + глубина в пределах MAX_PATH — корзина работает.
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         deep = tmp.name
-        for i in range(12):
-            deep = os.path.join(deep, "каталог-уровня-с-длинным-именем")
+        while len(deep) + 60 < 240:
+            deep = os.path.join(deep, "каталог-длинное-имя")
         path = _make_file(deep, name="глубокий-файл.txt")
-        self.assertGreater(len(path), 200)
+        self.assertGreater(len(path), 150)
         result = trash.trash([_Entry("глубокий-файл.txt", path)],
                              lambda s: None, lambda: False)
         self.assertTrue(result.ok, result.errors)
         self.assertFalse(os.path.exists(path))
+
+    def test_beyond_max_path_honest_error(self):
+        # ТЗ §7.4/§7.6: SHFileOperationW — API эпохи MAX_PATH; пути длиннее
+        # 260 он не берёт. Контракт: честная ошибка по объекту, без падения
+        # и без молчаливой потери файла (IFileOperation — улучшение Ф3).
+        tmp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+        self.addCleanup(tmp.cleanup)
+        deep = tmp.name
+        while len(deep) + 60 < 420:
+            deep = os.path.join(deep, "каталог-за-пределом-max-path")
+        long_path = os.path.join(deep, "файл.txt")
+        os.makedirs("\\\\?\\" + deep, exist_ok=True)
+        with open("\\\\?\\" + long_path, "w", encoding="utf-8") as f:
+            f.write("x")
+        self.assertTrue(os.path.exists("\\\\?\\" + long_path))
+        result = trash.trash([_Entry("файл", long_path)],
+                             lambda s: None, lambda: False)
+        self.assertFalse(result.ok)
+        self.assertEqual(result.done_files, 0)
+        self.assertEqual(len(result.errors), 1)
+        self.assertTrue(os.path.exists("\\\\?\\" + long_path))
 
     def test_fixed_drive_considered_recyclable(self):
         self.assertTrue(trash._drive_supports_recycle_bin(

@@ -13,8 +13,10 @@
     detached=False  ждём завершения; возвращает (код, объединённый вывод),
                     вывод декодирован с errors="replace".
 
-Windows: cmd.exe /c (PowerShell — опция на живой проверке Ф3: кавычки
-%f/%d из shlex для cmd.exe пересматриваются там же); Linux: /bin/sh -c.
+Windows: cmd.exe /c (run_shell передаёт строку целиком — shell=True —
+чтобы кавычки кнопок %f/%d не искажались); shell_argv возвращает
+[«cmd.exe», «/d», «/c», cmd] для QProcess — кавычки сложных команд
+проверяются на живой машине в Ф3. Linux: /bin/sh -c (как сейчас).
 """
 
 from __future__ import annotations
@@ -43,8 +45,12 @@ def run_shell(cmd: str, cwd: str | None = None, detached: bool = False):
         if IS_WINDOWS:
             flags = (getattr(subprocess, "DETACHED_PROCESS", 0)
                      | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
+            # Строка целиком (shell=True -> cmd.exe /c <строка>): кавычки
+            # кнопок %f/%d доходят до cmd без искажений. List-форма
+            # [«cmd.exe», «/c», cmd] искажает встроенные кавычки —
+            # поймано тестом на windows-раннере.
             _last_detached = subprocess.Popen(
-                ["cmd.exe", "/d", "/c", cmd], cwd=cwd,
+                cmd, cwd=cwd, shell=True,
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -57,6 +63,9 @@ def run_shell(cmd: str, cwd: str | None = None, detached: bool = False):
                 stderr=subprocess.DEVNULL,
                 start_new_session=True)
         return None
-    proc = subprocess.run(shell_argv(cmd), cwd=cwd, capture_output=True)
+    if IS_WINDOWS:
+        proc = subprocess.run(cmd, cwd=cwd, shell=True, capture_output=True)
+    else:
+        proc = subprocess.run(shell_argv(cmd), cwd=cwd, capture_output=True)
     combined = (proc.stdout + proc.stderr).decode(errors="replace")
     return proc.returncode, combined
