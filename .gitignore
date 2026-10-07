@@ -7,3 +7,6 @@ dist/
 /.sphaera_commander.sync-tmp/
 # Состояние sphaera-context-engine
 /.sphaera/
+
+# Внутренняя рабочая тетрадь сессий — только локально, в git не публикуется
+/HANDOFF.md
