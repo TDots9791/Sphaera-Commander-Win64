@@ -1,13 +1,16 @@
 # Sphaera Commander Win64
 
-Windows-порт [Sphaera Commander](../Sphaera%20Commander) — двухпанельного
-файлового менеджера для Linux в духе Total Commander.
+Windows-порт [Sphaera Commander](https://github.com/TDots9791/Sphaera-Commander) —
+двухпанельного файлового менеджера в духе Total Commander.
 
-**Начните с [ТЗ.md](ТЗ.md)** — аудит переносимости, модель разделения
-проектов, фазы работ. Статус: Ф0 сделано (скелет, sync_core, контракты
-платформенного слоя); дальше — Ф1 (реализация paths/shell/terminals/trash).
+Общий код не хранится в этом репозитории: `sync_core.py` подтягивает пакет
+`sphaera_commander` из Linux-репозитория (версия/коммит — в
+`CORE_VERSION.txt`); вся Windows-специфика — только в `win64/platform/`
+(выбор реализации по `sys.platform`, подключается до импорта приложения).
+Статус: скелет готов (`sync_core`, контракты платформенного слоя, точка
+входа, тесты, CI); реализация слоя — следующий шаг.
 
 ```sh
-python3 sync_core.py                       # подтянуть общий код (0.22.2)
+python3 sync_core.py                       # подтянуть общий код
 python3 -m unittest discover -s tests -v   # тесты платформенного слоя
 ```
