@@ -1,8 +1,9 @@
 # CI Sphaera Commander Win64 (ТЗ §5).
 #
-# Ф0: sync_core + тесты платформенного слоя на ubuntu- и windows-раннерах.
-# Ф2 расширит: полный unittest-набор offscreen, PyInstaller onedir,
-# SPHAERA_SELFCHECK, артефакт .zip.
+# Ф1/Ф2: platform-тесты на ubuntu+windows; полный набор ядра offscreen;
+# PyInstaller onedir + SPHAERA_SELFCHECK + артефакт .zip. Шаги, требующие
+# ядро, gated на доступ к приватному Linux-репозиторию (секрет
+# CORE_REPO_TOKEN или открытые репозитории).
 #
 # Требует, чтобы ОБА репозитория были на GitHub и переменные ниже
 # указывали на них (сейчас remotes нет — workflow заработает после
@@ -52,3 +53,59 @@ jobs:
         run: python sync_core.py --check --source core
       - name: Тесты платформенного слоя
         run: python -m unittest discover -s tests -v
+      - name: Зависимости ядра
+        if: steps.core.outcome == 'success'
+        run: python -m pip install --disable-pip-version-check PySide6-Essentials pypdfium2 pypdf python-docx mammoth openpyxl python-pptx xlrd xlwt striprtf
+      - name: Полный набор ядра (offscreen)
+        if: steps.core.outcome == 'success'
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -m unittest discover -s core/tests -v
+
+  build:
+    name: Сборка .exe (windows-latest)
+    runs-on: windows-latest
+    needs: platform
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Выкачать общий код (Linux-репозиторий)
+        id: core
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.CORE_REPO }}
+          ref: ${{ env.CORE_REF }}
+          path: core
+        # Приватный кросс-репо недоступен дефолтному GITHUB_TOKEN.
+        # Включить: секрет CORE_REPO_TOKEN (PAT с доступом на чтение
+        # Linux-репо) + строка «token: ${{ secrets.CORE_REPO_TOKEN }}»
+        # в обоих checkout-шагах, либо открытые репозитории.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: sync_core
+        if: steps.core.outcome == 'success'
+        run: python sync_core.py --source core
+      - name: PyInstaller onedir
+        if: steps.core.outcome == 'success'
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File win64/build_exe.ps1
+      - name: SELFCHECK замороженной сборки (дымовой)
+        if: steps.core.outcome == 'success'
+        shell: pwsh
+        run: |
+          $env:SPHAERA_SELFCHECK = "1"
+          $p = Start-Process -FilePath "dist/SphaeraCommander/SphaeraCommander.exe" -Wait -PassThru
+          exit $p.ExitCode
+      - name: Артефакт .zip
+        if: steps.core.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SphaeraCommander-win64
+          path: dist/SphaeraCommander/
+      - name: Доступ к ядру
+        if: steps.core.outcome != 'success'
+        shell: pwsh
+        run: |
+          Write-Host "::warning::Ядро недоступно дефолтному токену (приватный кросс-репо) — сборка пропущена. Включается секретом CORE_REPO_TOKEN или открытием репозиториев."
