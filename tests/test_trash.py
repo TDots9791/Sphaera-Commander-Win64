@@ -88,6 +88,7 @@ class TestRealRecycleBin(unittest.TestCase):
         deep = tmp.name
         while len(deep) + 60 < 240:
             deep = os.path.join(deep, "каталог-длинное-имя")
+        os.makedirs(deep, exist_ok=True)
         path = _make_file(deep, name="глубокий-файл.txt")
         self.assertGreater(len(path), 150)
         result = trash.trash([_Entry("глубокий-файл.txt", path)],
@@ -96,9 +97,11 @@ class TestRealRecycleBin(unittest.TestCase):
         self.assertFalse(os.path.exists(path))
 
     def test_beyond_max_path_honest_error(self):
-        # ТЗ §7.4/§7.6: SHFileOperationW — API эпохи MAX_PATH; пути длиннее
-        # 260 он не берёт. Контракт: честная ошибка по объекту, без падения
-        # и без молчаливой потери файла (IFileOperation — улучшение Ф3).
+        # ТЗ §7.4/§7.6: поведение за MAX_PATH зависит от политики
+        # LongPathsEnabled машины. Оба исхода корректны: SHFileOperationW
+        # берёт длинный путь (где политика включена) — файл в корзине;
+        # не берёт — честная ошибка по объекту, файл не теряется
+        # (IFileOperation — улучшение Ф3).
         tmp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         self.addCleanup(tmp.cleanup)
         deep = tmp.name
@@ -111,10 +114,12 @@ class TestRealRecycleBin(unittest.TestCase):
         self.assertTrue(os.path.exists("\\\\?\\" + long_path))
         result = trash.trash([_Entry("файл", long_path)],
                              lambda s: None, lambda: False)
-        self.assertFalse(result.ok)
-        self.assertEqual(result.done_files, 0)
-        self.assertEqual(len(result.errors), 1)
-        self.assertTrue(os.path.exists("\\\\?\\" + long_path))
+        if result.ok:
+            self.assertFalse(os.path.exists("\\\\?\\" + long_path))
+        else:
+            self.assertEqual(result.done_files, 0)
+            self.assertEqual(len(result.errors), 1)
+            self.assertTrue(os.path.exists("\\\\?\\" + long_path))
 
     def test_fixed_drive_considered_recyclable(self):
         self.assertTrue(trash._drive_supports_recycle_bin(
