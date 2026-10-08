@@ -2,16 +2,18 @@
 """Диагностика отрицательных st_size на Windows (Ф3, живая проверка).
 
 Проверяет lstat-размеры reparse-объектов (junction, симлинки) на
-искусственных образцах и сканирует реальный профиль на отрицательные
-значения — те самые, что портят сумму dir_stats. Запуск из корня:
+искусственных образцах и сканирует каталог на отрицательные значения —
+те самые, что портят сумму dir_stats. Запуск из корня репозитория:
 
-  python win64/diag_reparse.py
+  python win64/diag_reparse.py                 # профиль пользователя
+  python win64/diag_reparse.py "D:\\путь"      # конкретная папка
 """
 
 from __future__ import annotations
 
 import os
 import subprocess
+import sys
 import tempfile
 
 
@@ -45,10 +47,11 @@ def main() -> None:
         if os.path.lexists(path):
             probe(path)
 
-    print("== реальные reparse-объекты профиля (до 12 находок) ==")
+    print("== реальные reparse-объекты (до 12 находок) ==")
     shown = 0
     negative = []
-    home = os.path.expanduser("~")
+    home = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser("~")
+    print(f"сканируется: {home}")
     for root, dirs, files in os.walk(home):
         for name in dirs + files:
             path = os.path.join(root, name)
