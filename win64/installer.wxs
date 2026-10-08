@@ -31,8 +31,7 @@
             Message="Требуется Windows 10 или новее." />
 
     <WixVariable Id="WixUILicenseRtf" Value="win64\license.rtf" />
-    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="WIXUI_INSTALLDIR" />
-    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
 
     <StandardDirectory Id="ProgramMenuFolder">
       <Directory Id="MenuDir" Name="Sphaera Commander">
