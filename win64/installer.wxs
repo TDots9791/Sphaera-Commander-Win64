@@ -58,6 +58,22 @@
       </Component>
     </StandardDirectory>
 
+    <!-- фирменный шрифт айдентики (PT Serif, ParaType, лицензия OFL —
+         текст ставится рядом, win64/fonts/OFL.txt) -->
+    <StandardDirectory Id="FontsFolder">
+      <Component Id="PTSerifFont" Guid="9ACA35BA-A327-4B10-BD57-51B690534BAA">
+        <File Id="PTSerifRegular.ttf" Source="win64\fonts\PT_Serif-Web-Regular.ttf" TrueType="yes" />
+        <RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
+                       Name="PT Serif (TrueType)" Type="string"
+                       Value="PT_Serif-Web-Regular.ttf" />
+      </Component>
+    </StandardDirectory>
+
+    <Component Id="FontLicense" Guid="79F996B3-9C13-4F56-94A3-CC84994FA86B"
+               Directory="INSTALLFOLDER">
+      <File Id="PTSerifOFL.txt" Source="win64\fonts\OFL.txt" Name="PT_Serif-OFL.txt" />
+    </Component>
+
     <!-- «Открыть в Sphaera Commander» в контекстном меню папок —
          Windows-эквивалент MimeType=inode/directory -->
     <Component Id="DirAssociation" Guid="24B5F593-3F81-41C8-9D2A-47F9ACAF6CBD"
@@ -77,6 +93,8 @@
       <ComponentRef Id="StartMenuShortcut" />
       <ComponentRef Id="DesktopShortcut" />
       <ComponentRef Id="DirAssociation" />
+      <ComponentRef Id="PTSerifFont" />
+      <ComponentRef Id="FontLicense" />
     </Feature>
   </Package>
 </Wix>
