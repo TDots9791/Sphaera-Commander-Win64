@@ -1,4 +1,4 @@
 # Пишется sync_core.py, вручную не править.
 version=0.22.2
-commit=78319befa0c6ce4f402d8297907cc2ca4f115f29
-synced=2026-10-09T02:05:38+03:00
+commit=62613439d31a918454b5ade0032c7d3d5b24fd0a
+synced=2026-10-09T02:11:22+03:00
