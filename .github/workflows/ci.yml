@@ -125,9 +125,10 @@ jobs:
         if: steps.core.outcome == 'success'
         shell: pwsh
         run: |
-          # пин на 6.x: v7 требует OSMF EULA/плату (WIX7015)
+          # пин на 6.x: v7 требует OSMF EULA/плату (WIX7015);
+          # расширение тоже 6.x — иначе несовместимо с тулом (WIX6101)
           dotnet tool install --global wix --version "6.*"
-          wix extension add -g WixToolset.UI.wixext
+          wix extension add -g WixToolset.UI.wixext --version "6.*"
       - name: Установщик MSI (WiX)
         if: steps.core.outcome == 'success'
         shell: pwsh
