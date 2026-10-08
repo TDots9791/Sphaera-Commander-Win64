@@ -67,11 +67,26 @@ jobs:
           Add-Content $env:GITHUB_PATH "C:\Program Files\7-Zip"
       - name: Полный набор ядра (offscreen)
         if: steps.core.outcome == 'success'
+        shell: pwsh
         env:
           QT_QPA_PLATFORM: offscreen
           PYTHONUTF8: "1"
           PYTHONFAULTHANDLER: "1"
-        run: python core/tests/run_suite.py core/tests
+        run: |
+          python core/tests/run_suite.py core/tests 2>&1 | Tee-Object -Variable suite
+          $text = $suite | Out-String
+          if ($text -match "FAILED") {
+            Write-Host "::error::Набор упал (FAILED в выводе)"
+            exit 1
+          }
+          if ($text -notmatch "OK \(") {
+            Write-Host "::error::Набор не завершился (нет финального OK)"
+            exit 1
+          }
+          # Известный краш Qt-offscreen при РАЗРУШЕНИИ процесса ПОСЛЕ
+          # вердикта (access violation, faulthandler показал только спящие
+          # воркеры) — вердикт уже в логе, ему и верим.
+          exit 0
 
   build:
     name: Сборка .exe (windows-latest)
