@@ -35,7 +35,9 @@ def build(dir_path: Path, dir_id: str, counters: dict, lines: list, depth: int) 
             counters["file"] += 1
             cid = f"cmp.{counters['cmp']:04d}"
             fid = f"fil.{counters['file']:04d}"
-            rel = child.relative_to(DIST).as_posix()
+            # Source резолвится относительно папки .wxs (win64/), а не cwd
+            rel = (Path("..") / "dist" / "SphaeraCommander"
+                   / child.relative_to(DIST)).as_posix()
             lines.append(
                 f'{pad}  <Component Id={quoteattr(cid)}>'
                 f'<File Id={quoteattr(fid)} Source={quoteattr(rel)} />'
