@@ -115,6 +115,12 @@ jobs:
       - name: sync_core
         if: steps.core.outcome == 'success'
         run: python sync_core.py --source core
+      - name: Диагностика отрицательных reparse-размеров
+        if: steps.core.outcome == 'success'
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+        run: python win64/diag_reparse.py
       - name: PyInstaller onedir
         if: steps.core.outcome == 'success'
         shell: pwsh
