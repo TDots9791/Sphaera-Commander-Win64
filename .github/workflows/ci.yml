@@ -75,11 +75,13 @@ jobs:
         run: |
           python core/tests/run_suite.py core/tests 2>&1 | Tee-Object -Variable suite
           $text = $suite | Out-String
-          if ($text -match "FAILED") {
+          # якоря на начала строк — вердикты unittest; иначе stderr-шум
+          # (ResourceWarning и пр.) даёт ложные совпадения подстрок
+          if ($text -match "(?m)^FAILED") {
             Write-Host "::error::Набор упал (FAILED в выводе)"
             exit 1
           }
-          if ($text -notmatch "OK \(") {
+          if ($text -notmatch "(?m)^OK \(") {
             Write-Host "::error::Набор не завершился (нет финального OK)"
             exit 1
           }
