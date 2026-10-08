@@ -49,20 +49,28 @@ if not (DIST / "SphaeraCommander.exe").is_file():
 counters = {"dir": 0, "cmp": 0, "file": 0}
 refs: list[str] = []
 lines: list[str] = [
-    '<Fragment xmlns="http://wixtoolset.org/schemas/v4/wxs">',
-    '  <StandardDirectory Id="ProgramFiles64Folder">',
-    '    <Directory Id="INSTALLFOLDER" Name="SphaeraCommander">',
+    '<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">',
+    '  <Fragment>',
+    '    <StandardDirectory Id="ProgramFiles64Folder">',
+    '      <Directory Id="INSTALLFOLDER" Name="SphaeraCommander">',
 ]
-build(DIST, "INSTALLFOLDER", counters, lines, 3)
+build(DIST, "INSTALLFOLDER", counters, lines, 4)
 lines += [
-    '    </Directory>',
-    '  </StandardDirectory>',
-    '  <ComponentGroup Id="AppComponents">',
-    *refs,
-    '  </ComponentGroup>',
-    '</Fragment>',
+    '      </Directory>',
+    '    </StandardDirectory>',
+    '  </Fragment>',
+    '  <Fragment>',
+    '    <ComponentGroup Id="AppComponents">',
+    *('      ' + r for r in refs),
+    '    </ComponentGroup>',
+    '  </Fragment>',
+    '</Wix>',
 ]
 OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
+# Windows-консоль по умолчанию в cp1252 — кириллический print падает
+for stream in (sys.stdout, sys.stderr):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(encoding="utf-8", errors="replace")
 print(f"харвест: {counters['cmp']} файлов, {counters['dir']} каталогов -> {OUT}")
 
 # самопроверка: хорошо сформированный XML

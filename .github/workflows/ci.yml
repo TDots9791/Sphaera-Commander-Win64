@@ -137,6 +137,8 @@ jobs:
       - name: Установщик MSI (WiX)
         if: steps.core.outcome == 'success'
         shell: pwsh
+        env:
+          PYTHONUTF8: "1"
         run: |
           $env:PATH = "$env:USERPROFILE\.dotnet\tools;$env:PATH"
           python win64/installer-harvest.py

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Установщик MSI Sphaera Commander (ТЗ §5, Ф4). WiX Toolset 6:
-     dotnet tool install --global wix
-     wix extension add -g WixToolset.UI.wixext
-     wix build -arch x64 -d AppVersion=0.22.2 -ext WixToolset.UI.wixext
-               -culture ru-ru -out dist-installer\SphaeraCommander-0.22.2.msi
-               win64\installer.wxs win64\.harvest.wxs
+     dotnet tool install --global wix  (см. ci.yml)
+     wix extension add -g WixToolset.UI.wixext/6.0.2  (глобально)
+     wix build: -arch x64 -d AppVersion=0.22.2 -ext WixToolset.UI.wixext
+                -culture ru-ru -out dist-installer/SphaeraCommander-0.22.2.msi
+                win64/installer.wxs win64/.harvest.wxs
      UpgradeCode НЕ менять: по нему MajorUpgrade находит прежние версии.
      Конфиг пользователя (%APPDATA%\SphaeraCommander) MSI не трогает —
      переживает обновление; удаление настроек — решение пользователя. -->
