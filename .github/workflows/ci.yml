@@ -121,16 +121,28 @@ jobs:
         run: |
           $ver = ((Get-Content CORE_VERSION.txt) | Where-Object { $_ -like 'version=*' }) -replace '^version=', ''
           "version=$ver" >> $env:GITHUB_OUTPUT
-      - name: Установщик Inno Setup
+      - name: WiX Toolset 6 (dotnet tool)
         if: steps.core.outcome == 'success'
         shell: pwsh
-        run: ISCC /DAPP_VERSION=${{ steps.ver.outputs.version }} win64\installer.iss
+        run: |
+          dotnet tool install --global wix
+          wix extension add -g WixToolset.UI.wixext
+      - name: Установщик MSI (WiX)
+        if: steps.core.outcome == 'success'
+        shell: pwsh
+        run: |
+          $env:PATH = "$env:USERPROFILE\.dotnet\tools;$env:PATH"
+          python win64/installer-harvest.py
+          wix build -arch x64 -ext WixToolset.UI.wixext -culture ru-ru `
+            -d AppVersion=${{ steps.ver.outputs.version }} `
+            -out "dist-installer\SphaeraCommander-${{ steps.ver.outputs.version }}.msi" `
+            win64\installer.wxs win64\.harvest.wxs
       - name: Артефакт установщика
         if: steps.core.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: SphaeraCommander-win64-setup
-          path: dist-installer/
+          path: dist-installer/*.msi
       - name: Смок-тест установщика (install/update/uninstall)
         if: steps.core.outcome == 'success'
         shell: pwsh

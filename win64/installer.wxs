@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Установщик MSI Sphaera Commander (ТЗ §5, Ф4). WiX Toolset 6:
+     dotnet tool install --global wix
+     wix extension add -g WixToolset.UI.wixext
+     wix build -arch x64 -d AppVersion=0.22.2 -ext WixToolset.UI.wixext
+               -culture ru-ru -out dist-installer\SphaeraCommander-0.22.2.msi
+               win64\installer.wxs win64\.harvest.wxs
+     UpgradeCode НЕ менять: по нему MajorUpgrade находит прежние версии.
+     Конфиг пользователя (%APPDATA%\SphaeraCommander) MSI не трогает —
+     переживает обновление; удаление настроек — решение пользователя. -->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <Package Name="Sphaera Commander"
+           Manufacturer="Sphaera"
+           Version="$(var.AppVersion)"
+           UpgradeCode="2889DF8D-591E-454C-BFDF-7DFF20F0C879"
+           Scope="perMachine"
+           Compressed="yes"
+           Language="1049"
+           Codepage="1251">
+
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
+                  DowngradeErrorMessage="[ProductName]: уже установлена более новая версия." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="AppIcon.exe" SourceFile="win64\sphaera-commander.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.exe" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/TDots9791/Sphaera-Commander" />
+
+    <Launch Condition="Installed OR VersionNT &gt;= 603"
+            Message="Требуется Windows 10 или новее." />
+
+    <WixVariable Id="WixUILicenseRtf" Value="win64\license.rtf" />
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="WIXUI_INSTALLDIR" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="MenuDir" Name="Sphaera Commander">
+        <Component Id="StartMenuShortcut" Guid="D285A91C-8EE7-4882-97F3-2681CCA2EAE4">
+          <Shortcut Id="StartMenuExe" Name="Sphaera Commander"
+                    Description="Sphaera Commander"
+                    Target="[INSTALLFOLDER]SphaeraCommander.exe"
+                    WorkingDirectory="INSTALLFOLDER" Icon="AppIcon.exe" />
+          <RemoveFolder Id="RemoveMenuDir" Directory="MenuDir" On="uninstall" />
+          <RegistryValue Root="HKMU" Key="Software\Sphaera\SphaeraCommander"
+                         Name="startmenu" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="DesktopFolder">
+      <Component Id="DesktopShortcut" Guid="424CA49F-7AAF-4F8F-BC3F-D481A66A6A1A">
+        <Shortcut Id="DesktopExe" Name="Sphaera Commander"
+                  Description="Sphaera Commander"
+                  Target="[INSTALLFOLDER]SphaeraCommander.exe"
+                  WorkingDirectory="INSTALLFOLDER" Icon="AppIcon.exe" />
+        <RegistryValue Root="HKMU" Key="Software\Sphaera\SphaeraCommander"
+                       Name="desktop" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <!-- «Открыть в Sphaera Commander» в контекстном меню папок —
+         Windows-эквивалент MimeType=inode/directory -->
+    <Component Id="DirAssociation" Guid="24B5F593-3F81-41C8-9D2A-47F9ACAF6CBD"
+               Directory="INSTALLFOLDER">
+      <RegistryValue Root="HKCR" Key="Directory\shell\SphaeraCommander"
+                     Value="Открыть в Sphaera Commander" Type="string" KeyPath="yes" />
+      <RegistryValue Root="HKCR" Key="Directory\shell\SphaeraCommander"
+                     Name="Icon" Value="[INSTALLFOLDER]SphaeraCommander.exe" Type="string" />
+      <RegistryValue Root="HKCR" Key="Directory\shell\SphaeraCommander\command"
+                     Value='"[INSTALLFOLDER]SphaeraCommander.exe" "%1"' Type="string" />
+    </Component>
+
+    <Feature Id="Main" Title="Sphaera Commander"
+             Description="Двухпанельный файловый менеджер"
+             Level="1" AllowAbsent="no">
+      <ComponentGroupRef Id="AppComponents" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="DesktopShortcut" />
+      <ComponentRef Id="DirAssociation" />
+    </Feature>
+  </Package>
+</Wix>
