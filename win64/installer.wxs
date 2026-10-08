@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Установщик MSI Sphaera Commander (ТЗ §5, Ф4). WiX Toolset 6:
-     dotnet tool install --global wix  (см. ci.yml)
-     wix extension add -g WixToolset.UI.wixext/6.0.2  (глобально)
+     установка тула и сборка — см. ci.yml (шаг «Установщик MSI (WiX)»):
+     тул 6.x глобально + расширение WixToolset.UI.wixext/6.0.2,
      wix build: -arch x64 -d AppVersion=0.22.2 -ext WixToolset.UI.wixext
                 -culture ru-ru -out dist-installer/SphaeraCommander-0.22.2.msi
                 win64/installer.wxs win64/.harvest.wxs
