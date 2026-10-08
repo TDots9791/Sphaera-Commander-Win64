@@ -35,8 +35,8 @@ def build(dir_path: Path, dir_id: str, counters: dict, lines: list, depth: int) 
             counters["file"] += 1
             cid = f"cmp.{counters['cmp']:04d}"
             fid = f"fil.{counters['file']:04d}"
-            # Source резолвится относительно папки .wxs (win64/), а не cwd
-            rel = (Path("..") / "dist" / "SphaeraCommander"
+            # Source резолвится от cwd вызова «wix build» (корень репо)
+            rel = (Path("dist") / "SphaeraCommander"
                    / child.relative_to(DIST)).as_posix()
             lines.append(
                 f'{pad}  <Component Id={quoteattr(cid)}>'
