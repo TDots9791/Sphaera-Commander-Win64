@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Установщик MSI Sphaera Commander (ТЗ §5, Ф4). WiX Toolset 6:
      установка тула и сборка — см. ci.yml (шаг «Установщик MSI (WiX)»):
-     тул 6.x глобально + расширения WixToolset.UI.wixext/6.0.2 и
-     WixToolset.Util.wixext/6.0.2,
+     тул 6.x глобально + расширение WixToolset.UI.wixext/6.0.2,
      wix build: -arch x64 -d AppVersion=0.22.2 -ext WixToolset.UI.wixext
-                -ext WixToolset.Util.wixext -culture ru-ru
+                -culture ru-ru
                 -out dist-installer/SphaeraCommander-0.22.2.msi
                 win64/installer.wxs win64/.harvest.wxs
      UpgradeCode НЕ менять: по нему MajorUpgrade находит прежние версии.
@@ -40,18 +39,13 @@
                       Type="raw" Bitness="always32" />
     </Property>
 
-    <!-- тихая установка WinFsp из redist: команда готовится немедленным
-         действием, исполняется отложенным QuietExec64 (util-расширение,
-         WixCA) уже с правами машины -->
-    <!-- QuietExec64 читает свойство, названное как само действие -->
-    <CustomAction Id="SetWinFspCmd" Property="InstallWinFsp"
-                  Value="&quot;[SystemFolder]msiexec.exe&quot; /i &quot;[INSTALLFOLDER]redist\winfsp.msi&quot; /qn /norestart"
-                  Execute="immediate" />
-    <CustomAction Id="InstallWinFsp" BinaryRef="WixCA" DllEntry="QuietExec64"
+    <!-- тихая установка WinFsp из redist: встроенное ExeCommand-действие
+         (WiX 4+, тихий exec без расширений), отложенное, с правами машины;
+         Return=ignore — при неудаче приложение само даст подсказку -->
+    <CustomAction Id="InstallWinFsp"
+                  ExeCommand="&quot;[SystemFolder]msiexec.exe&quot; /i &quot;[INSTALLFOLDER]redist\winfsp.msi&quot; /qn /norestart"
                   Execute="deferred" Impersonate="no" Return="ignore" />
     <InstallExecuteSequence>
-      <Custom Action="SetWinFspCmd" Before="InstallInitialize"
-              Condition="NOT Installed AND NOT WINFSPPRESENT" />
       <Custom Action="InstallWinFsp" After="InstallFiles"
               Condition="NOT Installed AND NOT WINFSPPRESENT" />
     </InstallExecuteSequence>
