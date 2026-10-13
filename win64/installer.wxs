@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Установщик MSI Sphaera Commander (ТЗ §5, Ф4). WiX Toolset 6:
      установка тула и сборка — см. ci.yml (шаг «Установщик MSI (WiX)»):
-     тул 6.x глобально + расширение WixToolset.UI.wixext/6.0.2,
+     тул 6.x глобально + расширения WixToolset.UI.wixext/6.0.2 и
+     WixToolset.Util.wixext/6.0.2,
      wix build: -arch x64 -d AppVersion=0.22.2 -ext WixToolset.UI.wixext
-                -culture ru-ru -out dist-installer/SphaeraCommander-0.22.2.msi
+                -ext WixToolset.Util.wixext -culture ru-ru
+                -out dist-installer/SphaeraCommander-0.22.2.msi
                 win64/installer.wxs win64/.harvest.wxs
      UpgradeCode НЕ менять: по нему MajorUpgrade находит прежние версии.
      Конфиг пользователя (%APPDATA%\SphaeraCommander) MSI не трогает —
-     переживает обновление; удаление настроек — решение пользователя. -->
+     переживает обновление; удаление настроек — решение пользователя.
+     В дистрибутив вшиты rclone.exe (рядом с exe, кладёт fetch-redist.ps1)
+     и redist/winfsp.msi: если WinFsp в системе нет, он ставится тихо
+     кастом-действием InstallWinFsp (Return="ignore" — при неудаче
+     приложение само вежливо сообщит подсказкой; смок проверяет реестр). -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package Name="Sphaera Commander"
@@ -26,6 +32,29 @@
     <Icon Id="AppIcon.exe" SourceFile="win64\sphaera-commander.ico" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon.exe" />
     <Property Id="ARPHELPLINK" Value="https://github.com/TDots9791/Sphaera-Commander" />
+
+    <!-- WinFsp уже стоит? (его x86-MSI пишет ключ в WOW6432Node) -->
+    <Property Id="WINFSPPRESENT" Secure="yes">
+      <RegistrySearch Id="WinFspReg" Root="HKLM"
+                      Key="SOFTWARE\WOW6432Node\WinFsp" Name="InstallDir"
+                      Type="raw" Win64="no" />
+    </Property>
+
+    <!-- тихая установка WinFsp из redist: команда готовится немедленным
+         действием, исполняется отложенным QuietExec64 (util-расширение,
+         WixCA) уже с правами машины -->
+    <CustomAction Id="SetWinFspCmd" Property="WinFspCmd"
+                  Value="&quot;[SystemFolder]msiexec.exe&quot; /i &quot;[INSTALLFOLDER]redist\winfsp.msi&quot; /qn /norestart"
+                  Execute="immediate" />
+    <CustomAction Id="InstallWinFsp" BinaryRef="WixCA" DllEntry="QuietExec64"
+                  Execute="deferred" Impersonate="no" Return="ignore"
+                  Property="WinFspCmd" />
+    <InstallExecuteSequence>
+      <Custom Action="SetWinFspCmd" Before="InstallInitialize"
+              Condition="NOT Installed AND NOT WINFSPPRESENT" />
+      <Custom Action="InstallWinFsp" After="InstallFiles"
+              Condition="NOT Installed AND NOT WINFSPPRESENT" />
+    </InstallExecuteSequence>
 
     <Launch Condition="Installed OR VersionNT &gt;= 603"
             Message="Требуется Windows 10 или новее." />

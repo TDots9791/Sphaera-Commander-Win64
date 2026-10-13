@@ -42,6 +42,16 @@ while (-not $app -and (Get-Date) -lt $deadline) {
 $exe = if ($app) { Join-Path $app "SphaeraCommander.exe" } else { $null }
 if (-not ($exe -and (Test-Path $exe))) { throw "после установки exe не появился (loc=$app)" }
 
+# 1б. redist: rclone рядом с exe + WinFsp поставлен CA-действием
+if (-not (Test-Path (Join-Path $app "rclone.exe"))) {
+    throw "rclone.exe не появился в каталоге приложения"
+}
+$winfspKey = Get-Item "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\WinFsp" `
+    -ErrorAction SilentlyContinue
+if (-not $winfspKey) {
+    throw "WinFsp не установлен (нет ключа реестра) — CA InstallWinFsp не сработал"
+}
+
 # 2. SELFCHECK установленного exe
 $env:SPHAERA_SELFCHECK = "1"
 $p = Start-Process -FilePath $exe -Wait -PassThru
@@ -70,4 +80,4 @@ $leftover = Get-ChildItem "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Unins
             Where-Object { (Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue).DisplayName -eq "Sphaera Commander" }
 if ($leftover) { throw "ключ деинсталлятора не удалён" }
 
-Write-Host "СМОК OK: установка, SELFCHECK, обновление (конфиг цел), деинсталляция без мусора"
+Write-Host "СМОК OK: установка (включая rclone и WinFsp), SELFCHECK, обновление (конфиг цел), деинсталляция без мусора"
