@@ -42,14 +42,14 @@ while (-not $app -and (Get-Date) -lt $deadline) {
 $exe = if ($app) { Join-Path $app "SphaeraCommander.exe" } else { $null }
 if (-not ($exe -and (Test-Path $exe))) { throw "после установки exe не появился (loc=$app)" }
 
-# 1б. redist: rclone рядом с exe + WinFsp поставлен CA-действием
+# 1б. redist: rclone рядом с exe + winfsp.msi в комплекте (само приложение
+# поставит WinFsp по запросу при первом облачном диске — вложенный msiexec
+# из нашей MSI запрещён Windows Installer)
 if (-not (Test-Path (Join-Path $app "rclone.exe"))) {
     throw "rclone.exe не появился в каталоге приложения"
 }
-$winfspKey = Get-Item "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\WinFsp" `
-    -ErrorAction SilentlyContinue
-if (-not $winfspKey) {
-    throw "WinFsp не установлен (нет ключа реестра) — CA InstallWinFsp не сработал"
+if (-not (Test-Path (Join-Path $app "redist\winfsp.msi"))) {
+    throw "redist\\winfsp.msi не появился в каталоге приложения"
 }
 
 # 2. SELFCHECK установленного exe

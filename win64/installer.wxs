@@ -10,9 +10,9 @@
      Конфиг пользователя (%APPDATA%\SphaeraCommander) MSI не трогает —
      переживает обновление; удаление настроек — решение пользователя.
      В дистрибутив вшиты rclone.exe (рядом с exe, кладёт fetch-redist.ps1)
-     и redist/winfsp.msi: если WinFsp в системе нет, он ставится тихо
-     кастом-действием InstallWinFsp (Return="ignore" — при неудаче
-     приложение само вежливо сообщит подсказкой; смок проверяет реестр). -->
+     и redist/winfsp.msi: WinFsp ставит само приложение при первом
+     «подключить как диск» (вложенный msiexec из нашей MSI запрещён
+     Windows Installer — код 1618). -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package Name="Sphaera Commander"
@@ -32,23 +32,12 @@
     <Property Id="ARPPRODUCTICON" Value="AppIcon.exe" />
     <Property Id="ARPHELPLINK" Value="https://github.com/TDots9791/Sphaera-Commander" />
 
-    <!-- WinFsp уже стоит? (его x86-MSI пишет ключ в WOW6432Node) -->
-    <Property Id="WINFSPPRESENT" Secure="yes">
-      <RegistrySearch Id="WinFspReg" Root="HKLM"
-                      Key="SOFTWARE\WOW6432Node\WinFsp" Name="InstallDir"
-                      Type="raw" Bitness="always32" />
-    </Property>
-
-    <!-- тихая установка WinFsp из redist: встроенное ExeCommand-действие
-         (WiX 4+, тихий exec без расширений), отложенное, с правами машины;
-         Return=ignore — при неудаче приложение само даст подсказку -->
-    <CustomAction Id="InstallWinFsp" Directory="SystemFolder"
-                  ExeCommand="&quot;[SystemFolder]msiexec.exe&quot; /i &quot;[INSTALLFOLDER]redist\winfsp.msi&quot; /qn /norestart"
-                  Execute="deferred" Impersonate="no" Return="ignore" />
-    <InstallExecuteSequence>
-      <Custom Action="InstallWinFsp" After="InstallFiles"
-              Condition="NOT Installed AND NOT WINFSPPRESENT" />
-    </InstallExecuteSequence>
+    <!-- В дистрибутиве: rclone.exe рядом с exe и redist/winfsp.msi
+         (кладёт fetch-redist.ps1, харвестит .harvest.wxs). WinFsp НЕ
+         ставится вложенным MSI — Windows Installer запрещает msiexec
+         внутри своей же установки (1618); его тихо ставит само
+         приложение при первом «подключить как диск» (UAC-запрос,
+         cloudmount.install_winfsp_from_redist). -->
 
     <Launch Condition="Installed OR VersionNT &gt;= 603"
             Message="Требуется Windows 10 или новее." />
