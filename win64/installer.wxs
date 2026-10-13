@@ -42,7 +42,7 @@
     <!-- тихая установка WinFsp из redist: встроенное ExeCommand-действие
          (WiX 4+, тихий exec без расширений), отложенное, с правами машины;
          Return=ignore — при неудаче приложение само даст подсказку -->
-    <CustomAction Id="InstallWinFsp"
+    <CustomAction Id="InstallWinFsp" Directory="SystemFolder"
                   ExeCommand="&quot;[SystemFolder]msiexec.exe&quot; /i &quot;[INSTALLFOLDER]redist\winfsp.msi&quot; /qn /norestart"
                   Execute="deferred" Impersonate="no" Return="ignore" />
     <InstallExecuteSequence>
